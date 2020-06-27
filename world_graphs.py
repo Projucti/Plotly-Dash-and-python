@@ -65,6 +65,11 @@ def div_cases_deaths_per_million():
                     style={'width': '75%', 'padding': '0px 20px 20px 20px', 'float': 'left', 'display': 'inline-block'})
 
 
+def div_facilities():
+    return html.Div(dcc.Graph(id='graph-with-slider-facilities-deaths'),
+                    style={'width': '75%', 'padding': '0px 20px 20px 20px', 'float': 'left', 'display': 'inline-block'})
+
+
 def div_slider():
     # dcc.Sliders don't work with timestamps/dates, only with numeric values
     return html.Div(dcc.Slider(
@@ -88,7 +93,8 @@ def div_slider():
 app.layout = html.Div([
     div_cases_deaths(),
     div_slider(),
-    div_cases_deaths_per_million()
+    div_cases_deaths_per_million(),
+    div_facilities()
 
 ])
 
@@ -97,7 +103,9 @@ app.layout = html.Div([
     Output('graph-with-slider-cases-deaths', 'figure'),
     [Input('date-slider', 'value')])
 def update_figure(selected_date):
-    filtered_df = df_world[(df_world.date == unixToDatetime(selected_date)) & (df_world.location != 'World')]
+    filtered_df = df_world[(df_world.date == unixToDatetime(selected_date))
+                           & (df_world.location != 'World')
+                           & (df_world.location != 'International')]
     filtered_df = filtered_df.fillna('unspecified')
 
     fig = px.scatter(filtered_df,
@@ -118,18 +126,45 @@ def update_figure(selected_date):
     Output('graph-with-slider-cases-deaths-per-million', 'figure'),
     [Input('date-slider', 'value')])
 def update_figure_per_million(selected_date):
-    filtered_df = df_world[(df_world.date == unixToDatetime(selected_date)) & (df_world.location != 'World')]
+    filtered_df = df_world[(df_world.date == unixToDatetime(selected_date))
+                           & (df_world.location != 'World')
+                           & (df_world.location != 'International')]
     filtered_df = filtered_df.fillna('unspecified')
 
     fig = px.scatter(filtered_df,
                      x='total_cases_per_million',
                      y='total_deaths_per_million',
                      color=filtered_df.continent,
+                     #animation_frame='date',
                      hover_name=filtered_df.location,
                      hover_data=['population', 'hospital_beds_per_thousand', 'extreme_poverty']
                      )#,
                      #log_x = True,
                      #log_y = True)
+
+    fig.update_layout(transition_duration=500)
+
+    return fig
+
+
+@app.callback(
+    Output('graph-with-slider-facilities-deaths', 'figure'),
+    [Input('date-slider', 'value')])
+def update_figure_facilities(selected_date):
+    filtered_df = df_world[(df_world.date == unixToDatetime(selected_date))
+                           & (df_world.location != 'World')
+                           & (df_world.location != 'International')]
+    filtered_df = filtered_df.fillna('unspecified')
+
+    fig = px.scatter(filtered_df,
+                     x='handwashing_facilities',
+                     y='total_cases_per_million',
+                     color=filtered_df.continent,
+                     hover_name=filtered_df.location,
+                     hover_data=['total_deaths', 'population', 'hospital_beds_per_thousand', 'extreme_poverty']
+                     )#,
+    #log_x = True,
+    #log_y = True)
 
     fig.update_layout(transition_duration=500)
 
