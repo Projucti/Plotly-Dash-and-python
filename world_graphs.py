@@ -3,10 +3,9 @@ import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
 import plotly.express as px
-from datetime import datetime
 from dash.dependencies import Input, Output
 import time
-import math
+
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -19,6 +18,10 @@ daterange = pd.date_range(start=df_world['date'].min(),end=df_world['date'].max(
 
 features = [df_world[column] for column in df_world]
 
+
+# the functions unixTimeMillis, unixToDatetime and getMarks are taken from Nils' post on
+# https://stackoverflow.com/questions/51063191/date-slider-with-plotly-dash-does-not-work
+# and were slightly adapted
 def unixTimeMillis(dt):
     ''' Convert datetime to unix timestamp '''
     return int(time.mktime(dt.timetuple()))
@@ -37,7 +40,8 @@ def unixToDatetime(unix):
         date = off + pd.to_timedelta(1, unit='h')
     return date
 
-def getMarks(start, end, Nth):#, Nth=100):
+
+def getMarks(start, end, Nth):
     ''' Returns the marks for labeling.
         Every Nth value will be used.
     '''
@@ -74,43 +78,31 @@ def div_slider():
         vertical=True
     ), style={'width': '20%', 'padding': '0px 20px 20px 20px', 'float': 'right', 'display': 'inline-block'})
 
+
 app.layout = html.Div([
     div_cases_deaths(),
     div_slider()
 
 ])
 
-# def hover_name_notWorking(df, attribute):
-#     try:
-#         hover_name = df[attribute]
-#     except:
-#         hover_name = '?'
-#     return hover_name
-
-def hover_name(df, attribute):
-    hover_name = df[attribute]
-    if hover_name == 'nan': #math.isnan(hover_name):
-        hover_name = '?'
-    return hover_name
 
 @app.callback(
     Output('graph-with-slider-cases-deaths', 'figure'),
     [Input('date-slider', 'value')])
 def update_figure(selected_date):
-    #print('value: ', selected_date, 'selected: ', unixToDatetime(selected_date))
     filtered_df = df_world[(df_world.date == unixToDatetime(selected_date)) & (df_world.location != 'World')]
+    filtered_df = filtered_df.fillna('unspecified')
 
     fig = px.scatter(filtered_df,
                      x='total_cases',
                      y='total_deaths',
-                     #color=hover_name(filtered_df, 'continent'),
                      color=filtered_df.continent,
                      hover_name=filtered_df.location)
-                     #hover_name= hover_name(filtered_df, 'location'))
 
     fig.update_layout(transition_duration=500)
 
     return fig
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
