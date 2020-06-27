@@ -70,6 +70,35 @@ def div_facilities():
                     style={'width': '75%', 'padding': '0px 20px 20px 20px', 'float': 'left', 'display': 'inline-block'})
 
 
+def div_radio_axis_type(id, default, label):
+    """
+
+    :type id: str
+    :type default: must be 'Linear' or 'Log'
+    """
+    return html.Div([
+        html.Label(label),
+        dcc.RadioItems(
+            id=id,
+            options=[{'label': i, 'value': i} for i in ['Linear', 'Log']],
+            value=default,
+            labelStyle={'display': 'inline-block'}
+        )], style={'float': 'left', 'padding': '20px 20px 20px 20px'})
+
+
+#todo
+def div_panel(div):
+    """
+
+    :type div: list of 2 elements that should be shown together (e.g. selection for type of x- and y-axis)
+    """
+    return html.Div([
+        div[0],
+        div[1]
+        ]#, style={'display': 'inline-block'}
+    )
+
+
 def div_slider():
     # dcc.Sliders don't work with timestamps/dates, only with numeric values
     return html.Div(dcc.Slider(
@@ -91,9 +120,24 @@ def div_slider():
 
 
 app.layout = html.Div([
+    div_panel([
+        div_radio_axis_type('x_cases_death', 'Log', 'horizontal axis:'),
+        div_radio_axis_type('y_cases_death', 'Log', 'vertical axis:')
+    ]),
     div_cases_deaths(),
+
     div_slider(),
+
+    div_panel([
+        div_radio_axis_type('x_death_per_million', 'Linear', 'horizontal axis:'),
+        div_radio_axis_type('y_death_per_million', 'Linear', 'vertical axis:')
+    ]),
     div_cases_deaths_per_million(),
+
+    div_panel([
+        div_radio_axis_type('x_facilities', 'Linear', 'horizontal axis:'),
+        div_radio_axis_type('y_facilities', 'Linear', 'vertical axis:')
+    ]),
     div_facilities()
 
 ])
@@ -101,8 +145,10 @@ app.layout = html.Div([
 
 @app.callback(
     Output('graph-with-slider-cases-deaths', 'figure'),
-    [Input('date-slider', 'value')])
-def update_figure(selected_date):
+    [Input('date-slider', 'value'),
+     Input('x_cases_death', 'value'),
+     Input('y_cases_death', 'value')])
+def update_figure(selected_date, xaxis_type, yaxis_type):
     filtered_df = df_world[(df_world.date == unixToDatetime(selected_date))
                            & (df_world.location != 'World')
                            & (df_world.location != 'International')]
@@ -113,10 +159,10 @@ def update_figure(selected_date):
                      y='total_deaths',
                      color=filtered_df.continent,
                      hover_name=filtered_df.location,
-                     hover_data=['population'],
-                     log_x = True,
-                     log_y = True)
+                     hover_data=['population'])
 
+    fig.update_xaxes(type='linear' if xaxis_type == 'Linear' else 'log')
+    fig.update_yaxes(type='linear' if yaxis_type == 'Linear' else 'log')
     fig.update_layout(transition_duration=500)
 
     return fig
@@ -124,8 +170,10 @@ def update_figure(selected_date):
 
 @app.callback(
     Output('graph-with-slider-cases-deaths-per-million', 'figure'),
-    [Input('date-slider', 'value')])
-def update_figure_per_million(selected_date):
+    [Input('date-slider', 'value'),
+     Input('x_death_per_million', 'value'),
+     Input('y_death_per_million', 'value')])
+def update_figure_per_million(selected_date, xaxis_type, yaxis_type):
     filtered_df = df_world[(df_world.date == unixToDatetime(selected_date))
                            & (df_world.location != 'World')
                            & (df_world.location != 'International')]
@@ -138,10 +186,10 @@ def update_figure_per_million(selected_date):
                      #animation_frame='date',
                      hover_name=filtered_df.location,
                      hover_data=['population', 'hospital_beds_per_thousand', 'extreme_poverty']
-                     )#,
-                     #log_x = True,
-                     #log_y = True)
+                     )
 
+    fig.update_xaxes(type='linear' if xaxis_type == 'Linear' else 'log')
+    fig.update_yaxes(type='linear' if yaxis_type == 'Linear' else 'log')
     fig.update_layout(transition_duration=500)
 
     return fig
@@ -149,8 +197,10 @@ def update_figure_per_million(selected_date):
 
 @app.callback(
     Output('graph-with-slider-facilities-deaths', 'figure'),
-    [Input('date-slider', 'value')])
-def update_figure_facilities(selected_date):
+    [Input('date-slider', 'value'),
+     Input('x_facilities', 'value'),
+     Input('y_facilities', 'value')])
+def update_figure_facilities(selected_date, xaxis_type, yaxis_type):
     filtered_df = df_world[(df_world.date == unixToDatetime(selected_date))
                            & (df_world.location != 'World')
                            & (df_world.location != 'International')]
@@ -162,10 +212,10 @@ def update_figure_facilities(selected_date):
                      color=filtered_df.continent,
                      hover_name=filtered_df.location,
                      hover_data=['total_deaths', 'population', 'hospital_beds_per_thousand', 'extreme_poverty']
-                     )#,
-    #log_x = True,
-    #log_y = True)
+                     )
 
+    fig.update_xaxes(title='percentage of population with basic handwashing facilities', type='linear' if xaxis_type == 'Linear' else 'log')
+    fig.update_yaxes(type='linear' if yaxis_type == 'Linear' else 'log')
     fig.update_layout(transition_duration=500)
 
     return fig
