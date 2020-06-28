@@ -454,10 +454,18 @@ group_class = [{'label': str(item),
                 'value': str(item)}
                for item in graph_options]  # in group]
 
-graph_options_dict = [{
-    # TODO along group_class
-    ''
-}]
+column_options = ['new_cases', 'new_cases_per_million',
+                  'total_cases', 'total_cases_per_million',
+                  'total_deaths', 'total_deaths_per_million',
+                  'diabetes_prevalence',
+                  'handwashing_facilities',
+                  'hospital_beds_per_thousand',
+                  'population_density',
+                  'stringency_index']
+
+column_class = [{'label': str(item),
+                 'value': str(item)}
+                for item in column_options]
 
 fig.update_layout(plot_bgcolor=colors['background'], paper_bgcolor=colors['background'], font_color=colors['text'])
 
@@ -547,14 +555,15 @@ app.layout = html.Div([html.Div([
         ],
         className='row'
     ),
-    # map, bar and line chart
     html.Div(
         [
-            html.Div(
-                [
-                    # world_map
-                ], className="six columns"
-            ),
+            dcc.Graph(figure=world_map)
+        ]
+    ),
+
+    # bar and line chart
+    html.Div(
+        [
             html.Div(
                 [
                     # bar chart
@@ -567,10 +576,9 @@ app.layout = html.Div([html.Div([
                                   'layout': {'title': 'Daily new cases for World'},
                               },
                               style={'font-family': 'Helvetica',
-                                     "font-size": "120%",
-                                     "width": "80%"},
+                                     "font-size": "120%"},
                               ),
-                ], className="three columns"
+                ], className="six columns"
             ),
             html.Div(
                 [
@@ -585,32 +593,62 @@ app.layout = html.Div([html.Div([
                               },
                               style=layout_right,
                               ),
-                ], className="three columns"
+                ], className="six columns"
             ),
         ], className="row"
     ),
     # inserted from world_graphs.py
     # div_date_picker(), # use a calendar to choose date for which data is to be shown (instead of slider)
-    div_panel([
-        div_radio_axis_type('x_cases_death', 'Log', 'horizontal axis:'),
-        div_radio_axis_type('y_cases_death', 'Log', 'vertical axis:')
-    ]),
-    div_cases_deaths(),
+    # div_panel([
+    #     div_radio_axis_type('x_cases_death', 'Log', 'horizontal axis:'),
+    #     div_radio_axis_type('y_cases_death', 'Log', 'vertical axis:')
+    # ]),
+    # div_cases_deaths(),
 
     div_slider(),
 
-    div_panel([
-        div_radio_axis_type('x_death_per_million', 'Linear', 'horizontal axis:'),
-        div_radio_axis_type('y_death_per_million', 'Linear', 'vertical axis:')
-    ]),
-    div_cases_deaths_per_million(),
+    # div_panel([
+    #     div_radio_axis_type('x_death_per_million', 'Linear', 'horizontal axis:'),
+    #     div_radio_axis_type('y_death_per_million', 'Linear', 'vertical axis:')
+    # ]),
+    # div_cases_deaths_per_million(),
+    #
+    # div_panel([
+    #     div_radio_axis_type('x_facilities', 'Linear', 'horizontal axis:'),
+    #     div_radio_axis_type('y_facilities', 'Linear', 'vertical axis:')
+    # ]),
+    # div_facilities(),
 
-    div_panel([
-        div_radio_axis_type('x_facilities', 'Linear', 'horizontal axis:'),
-        div_radio_axis_type('y_facilities', 'Linear', 'vertical axis:')
-    ]),
-    div_facilities(),
 
+    # - dropdown menu with id='xaxis-column'
+    # - dropdown menu with id='yaxis-column'
+    html.Div(
+        [
+            html.P('Select x axis:'),
+            dcc.Dropdown(
+                id='xaxis-column',
+                options= column_class,
+                multi=False,
+                value='total_cases'
+            )
+        ]),
+    html.Div(
+        [
+            html.P('Select y axis:'),
+            dcc.Dropdown(
+                id='yaxis-column',
+                options= column_class,
+                multi=False,
+                value='total_deaths'
+            )
+        ]),
+    dcc.Graph(id='graph_1'), # for displaying 1 of my possible graphs
+
+    # for variable world graphs
+    div_panel([
+        div_radio_axis_type('xaxis-type', 'Linear', 'horizontal axis:'), # - RadioBox lin/log with id='xaxis-type', name ('horizontal...') can be anything
+        div_radio_axis_type('yaxis-type', 'Linear', 'vertical axis:')   # - RadioBox lin/log with id='yaxis-type'
+    ])
 
 ], className='ten columns offset-by-one'), get_germany_intital_layout()])
 
@@ -621,19 +659,53 @@ app.layout = html.Div([html.Div([
 
 # -- callbacks and functions -- #
 
-# TODO callback 
-# @app.callback(
-#     Output('graph_1', 'figure'),
-#     # [Input('xaxis-column', 'value'),
-#     #  Input('yaxis-column', 'value'),
-#     #  Input('xaxis-type', 'value'),
-#     #  Input('yaxis-type', 'value'),
-#     #  Input('year--slider', 'value')]
-#     [Input('graph-id', 'value')]
-# )
-# def update_graph(graph_option):
-#     fig = ...
-#     return fig
+@app.callback(
+    Output('graph_1', 'figure'),
+    [Input('xaxis-column', 'value'), # value to be displayed on x-axis
+     Input('yaxis-column', 'value'), # value to be displayed on y-axis
+     Input('xaxis-type', 'value'), # log/lin
+     Input('yaxis-type', 'value'), # log/lin
+     Input('date-slider', 'value')] # date to be displayed
+)
+def update_graph_1(x_axis_column, y_axis_column,
+                   x_axis_type, y_axis_type,
+                   selected_date):
+    filtered_df = df_world[(df_world.date == unixToDatetime(selected_date))
+                           & (df_world.location != 'World')
+                           & (df_world.location != 'International')]
+    filtered_df = filtered_df.fillna('unspecified')
+
+    fig = px.scatter(filtered_df,
+                     x=x_axis_column,
+                     y=y_axis_column,
+                     color=filtered_df.continent,
+                     hover_name=filtered_df.location,
+                     hover_data=['population', 'hospital_beds_per_thousand', 'extreme_poverty'],
+                     title='Worldwide data for selected date (' + unixToDatetime(selected_date).strftime('%Y-%m-%d') + ')')
+
+    x_title = x_axis_column
+    y_title = y_axis_column
+
+    if x_axis_column == 'handwashing_facilities':
+        x_title = 'percentage of population with basic handwashing facilities'
+    elif x_axis_column == 'diabetes_prevalence':
+        x_title = 'diabetes_prevalence (% of population (aged 20 to 79) in 2017)'
+    elif x_axis_column == 'stringency_index':
+        x_title = 'severity of restrictions from 0 to 100 (100 = strictest)'
+
+    if y_axis_column == 'handwashing_facilities':
+        y_title = 'percentage of population with basic handwashing facilities'
+    elif y_axis_column == 'diabetes_prevalence':
+        y_title = 'diabetes_prevalence (% of population (aged 20 to 79) in 2017)'
+    elif y_axis_column == 'stringency_index':
+        y_title = 'severity of restrictions from 0 to 100 (100 = strictest)'
+
+    fig.update_xaxes(title=x_title, type='linear' if x_axis_type == 'Linear' else 'log')
+    fig.update_yaxes(title=y_title, type='linear' if y_axis_type == 'Linear' else 'log')
+    fig.update_layout(transition_duration=500)
+
+    return fig
+
 
 @app.callback(
     dash.dependencies.Output('loc_dropdown', 'options'),
@@ -675,85 +747,85 @@ def update_graph(selected_option):
 
     return figure, line_figure
 
-
-@app.callback(
-    Output('graph-with-slider-cases-deaths', 'figure'),
-    [Input('date-slider', 'value'),
-     Input('x_cases_death', 'value'),
-     Input('y_cases_death', 'value')])
-def update_figure(selected_date, xaxis_type, yaxis_type):
-    filtered_df = df_world[(df_world.date == unixToDatetime(selected_date))
-                           & (df_world.location != 'World')
-                           & (df_world.location != 'International')]
-    filtered_df = filtered_df.fillna('unspecified')
-
-    fig = px.scatter(filtered_df,
-                     x='total_cases',
-                     y='total_deaths',
-                     color=filtered_df.continent,
-                     hover_name=filtered_df.location,
-                     hover_data=['population'])
-
-    fig.update_xaxes(type='linear' if xaxis_type == 'Linear' else 'log')
-    fig.update_yaxes(type='linear' if yaxis_type == 'Linear' else 'log')
-    fig.update_layout(transition_duration=500)
-
-    return fig
-
-
-@app.callback(
-    Output('graph-with-slider-cases-deaths-per-million', 'figure'),
-    [Input('date-slider', 'value'),  # alternatively: Input('date-picker-single', 'date'),
-     Input('x_death_per_million', 'value'),
-     Input('y_death_per_million', 'value')])
-def update_figure_per_million(selected_date, xaxis_type, yaxis_type):
-    # when using date-picker-single, just use selected_date without transformation for filtering
-    filtered_df = df_world[(df_world.date == unixToDatetime(selected_date))
-                           & (df_world.location != 'World')
-                           & (df_world.location != 'International')]
-    filtered_df = filtered_df.fillna('unspecified')
-
-    fig = px.scatter(filtered_df,
-                     x='total_cases_per_million',
-                     y='total_deaths_per_million',
-                     color=filtered_df.continent,
-                     # animation_frame='date',
-                     hover_name=filtered_df.location,
-                     hover_data=['population', 'hospital_beds_per_thousand', 'extreme_poverty']
-                     )
-
-    fig.update_xaxes(type='linear' if xaxis_type == 'Linear' else 'log')
-    fig.update_yaxes(type='linear' if yaxis_type == 'Linear' else 'log')
-    fig.update_layout(transition_duration=500)
-
-    return fig
-
-
-@app.callback(
-    Output('graph-with-slider-facilities-deaths', 'figure'),
-    [Input('date-slider', 'value'),
-     Input('x_facilities', 'value'),
-     Input('y_facilities', 'value')])
-def update_figure_facilities(selected_date, xaxis_type, yaxis_type):
-    filtered_df = df_world[(df_world.date == unixToDatetime(selected_date))
-                           & (df_world.location != 'World')
-                           & (df_world.location != 'International')]
-    filtered_df = filtered_df.fillna('unspecified')
-
-    fig = px.scatter(filtered_df,
-                     x='handwashing_facilities',
-                     y='total_cases_per_million',
-                     color=filtered_df.continent,
-                     hover_name=filtered_df.location,
-                     hover_data=['hospital_beds_per_thousand', 'total_deaths', 'population']
-                     )
-
-    fig.update_xaxes(title='percentage of population with basic handwashing facilities',
-                     type='linear' if xaxis_type == 'Linear' else 'log')
-    fig.update_yaxes(type='linear' if yaxis_type == 'Linear' else 'log')
-    fig.update_layout(transition_duration=500)
-
-    return fig
+# old stuff (fixed worldwide diagrams)
+# @app.callback(
+#     Output('graph-with-slider-cases-deaths', 'figure'),
+#     [Input('date-slider', 'value'),
+#      Input('x_cases_death', 'value'),
+#      Input('y_cases_death', 'value')])
+# def update_figure(selected_date, xaxis_type, yaxis_type):
+#     filtered_df = df_world[(df_world.date == unixToDatetime(selected_date))
+#                            & (df_world.location != 'World')
+#                            & (df_world.location != 'International')]
+#     filtered_df = filtered_df.fillna('unspecified')
+#
+#     fig = px.scatter(filtered_df,
+#                      x='total_cases',
+#                      y='total_deaths',
+#                      color=filtered_df.continent,
+#                      hover_name=filtered_df.location,
+#                      hover_data=['population'])
+#
+#     fig.update_xaxes(type='linear' if xaxis_type == 'Linear' else 'log')
+#     fig.update_yaxes(type='linear' if yaxis_type == 'Linear' else 'log')
+#     fig.update_layout(transition_duration=500)
+#
+#     return fig
+#
+#
+# @app.callback(
+#     Output('graph-with-slider-cases-deaths-per-million', 'figure'),
+#     [Input('date-slider', 'value'),  # alternatively: Input('date-picker-single', 'date'),
+#      Input('x_death_per_million', 'value'),
+#      Input('y_death_per_million', 'value')])
+# def update_figure_per_million(selected_date, xaxis_type, yaxis_type):
+#     # when using date-picker-single, just use selected_date without transformation for filtering
+#     filtered_df = df_world[(df_world.date == unixToDatetime(selected_date))
+#                            & (df_world.location != 'World')
+#                            & (df_world.location != 'International')]
+#     filtered_df = filtered_df.fillna('unspecified')
+#
+#     fig = px.scatter(filtered_df,
+#                      x='total_cases_per_million',
+#                      y='total_deaths_per_million',
+#                      color=filtered_df.continent,
+#                      # animation_frame='date',
+#                      hover_name=filtered_df.location,
+#                      hover_data=['population', 'hospital_beds_per_thousand', 'extreme_poverty']
+#                      )
+#
+#     fig.update_xaxes(type='linear' if xaxis_type == 'Linear' else 'log')
+#     fig.update_yaxes(type='linear' if yaxis_type == 'Linear' else 'log')
+#     fig.update_layout(transition_duration=500)
+#
+#     return fig
+#
+#
+# @app.callback(
+#     Output('graph-with-slider-facilities-deaths', 'figure'),
+#     [Input('date-slider', 'value'),
+#      Input('x_facilities', 'value'),
+#      Input('y_facilities', 'value')])
+# def update_figure_facilities(selected_date, xaxis_type, yaxis_type):
+#     filtered_df = df_world[(df_world.date == unixToDatetime(selected_date))
+#                            & (df_world.location != 'World')
+#                            & (df_world.location != 'International')]
+#     filtered_df = filtered_df.fillna('unspecified')
+#
+#     fig = px.scatter(filtered_df,
+#                      x='handwashing_facilities',
+#                      y='total_cases_per_million',
+#                      color=filtered_df.continent,
+#                      hover_name=filtered_df.location,
+#                      hover_data=['hospital_beds_per_thousand', 'total_deaths', 'population']
+#                      )
+#
+#     fig.update_xaxes(title='percentage of population with basic handwashing facilities',
+#                      type='linear' if xaxis_type == 'Linear' else 'log')
+#     fig.update_yaxes(type='linear' if yaxis_type == 'Linear' else 'log')
+#     fig.update_layout(transition_duration=500)
+#
+#     return fig
 
 
 # alternative for choosing the date for which the data is shown, use in combination with date-picker-single
