@@ -591,7 +591,8 @@ app.layout = html.Div([html.Div([
                                   ],
                                   'layout': {'title': 'Total Coronavirus cases for World'},
                               },
-                              style=layout_right,
+                              style={'font-family': 'Helvetica',
+                                     "font-size": "120%"},
                               ),
                 ], className="six columns"
             ),
