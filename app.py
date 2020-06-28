@@ -602,7 +602,7 @@ fig = px.choropleth_mapbox(df, geojson=countries, locations='iso_code', featurei
 fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 
 # app layout
-app.layout = html.Div([
+app.layout = html.Div([html.Div([
     # Title and Logo
     html.Div(
         [
@@ -766,8 +766,9 @@ app.layout = html.Div([
         div_radio_axis_type('y_facilities', 'Linear', 'vertical axis:')
     ]),
     div_facilities(),
-    get_germany_intital_layout()
-], className='ten columns offset-by-one')
+
+
+], className='ten columns offset-by-one'), get_germany_intital_layout()])
 
 
 # -- end of components -- #
