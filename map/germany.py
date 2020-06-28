@@ -206,13 +206,13 @@ def update_graph(start_date, end_date, locs, cause):
         names=age.index,
         values=age,
         hole=.3,
-        title=f'👶🏼/👵🏻 {title} nach Altersgruppe'
+        title=f'👶🏼/👵🏻 {title} nach Altersgruppe in {current_kreis}'
     )
     pie_gender = px.pie(
         data_frame=gender,
         names=gender.index,
         values=gender,
-        title=f'👸🏼/🤴🏻 {title} nach Geschlecht',
+        title=f'👸🏼/🤴🏻 {title} nach Geschlecht in {current_kreis}',
         hole=.3,
     )
     return line_figure, bar_figure, pie_age, pie_gender
