@@ -5,6 +5,7 @@ import json
 import os
 import time
 import urllib.request
+import urllib3
 # the following two are necessary, if date is chosen using a calendar:
 from datetime import datetime
 
@@ -20,12 +21,14 @@ from dash.dependencies import Input, Output
 
 # import re
 
+http = urllib3.PoolManager()
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 external_stylesheets = ['https://cdn.rawgit.com/plotly/dash-app-stylesheets/2d266c578d2a6e8850ebce48fdb52759b2aef506/stylesheet-oil-and-gas.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 ##### GERMANY #####
+print('Initialisiere Deutsche Daten...')
 ts = lambda dt64: datetime.utcfromtimestamp((dt64 - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's'))
 
 for _, _, files in os.walk("./data", topdown=False):
@@ -66,8 +69,9 @@ def reformat_box_y(start_date, end_date, locs, col_name, indicator_col):
 
 def get_germany_intital_layout():
     return html.Div([
-
-        html.H1("Cases in Germany by county", style={'text-align': 'center', 'font-family': 'Arial'}),
+        html.Div([
+            html.H1("Coronacases in Germany by county", style={'text-align': 'center', 'font-family': 'Arial'}),
+        ]),
         html.Div([
             html.Div(
                 dcc.DatePickerRange(
@@ -149,8 +153,7 @@ def get_germany_intital_layout():
             ], style={'width': '50%'}),
         ], style={'display': 'flex'}),
 
-    ])
-
+    ], style={'width': '100%'})
 
 @app.callback(
     [Output(component_id='ger-line-graph', component_property='figure'),
@@ -234,8 +237,7 @@ def germany_update_graph(start_date, end_date, locs, cause):
         hole=.3,
     )
     return line_figure, bar_figure, pie_age, pie_gender
-
-
+print('Fertig mit Deutschen Daten...')
 #### END GERMANY #####
 
 # -- data -- #
@@ -245,7 +247,9 @@ geojson_url = 'https://raw.githubusercontent.com/datasets/geo-countries/master/d
 # with open('./data/countries.geojson') as response:
 # with urlopen(geojson_url) as response:
 with urllib.request.urlopen(geojson_url) as response:
-    countries = json.load(response)
+     countries = json.load(response)
+
+
 
 world_url = "https://covid.ourworldindata.org/data/owid-covid-data.csv"
 
@@ -261,7 +265,6 @@ features = [df_world[column] for column in df_world]
 # -- TODO is df necessary? df: dataframe originally in app.py -- #
 df = pd.read_csv(world_url)
 df = df[df.location != "World"]
-# print(list(df.columns))
 
 logo_filename = './data/logo_upb.png'
 encoded_image = base64.b64encode(open(logo_filename, 'rb').read())
@@ -396,131 +399,6 @@ def div_slider():
 
 # -- end: data -- #
 
-# -- functions for (re)converting time data for slider -- #
-
-# the functions unixTimeMillis, unixToDatetime and getMarks are taken from Nils' post on
-# https://stackoverflow.com/questions/51063191/date-slider-with-plotly-dash-does-not-work
-# and were slightly adapted
-def unixTimeMillis(dt):
-    ''' Convert datetime to unix timestamp '''
-    return int(time.mktime(dt.timetuple()))
-
-
-def unixToDatetime(unix):
-    ''' Convert unix timestamp to datetime. '''
-    # off by 2 hours for dates after 29.3.2020 (i.e., calculates day prior, 22h),
-    # before that, off by 1 hour
-    off = pd.to_datetime(unix, unit='s')
-    date_clock_change1 = pd.to_datetime('2020-03-29')
-    date_clock_change2 = pd.to_datetime('2020-10-25')
-    # TODO using these conditions, app will only work until 27.3.2021 (next change to summer time)
-    if off >= date_clock_change1 and off < date_clock_change2:
-        date = off + pd.to_timedelta(2, unit='h')
-    else:
-        date = off + pd.to_timedelta(1, unit='h')
-    return date
-
-
-def getMarks(start, end, Nth):
-    ''' Returns the marks for labeling.
-        Every Nth value will be used.
-    '''
-
-    result = {}
-    for i, date in enumerate(daterange):
-        if (i % Nth == 1):
-            # Append value to dict
-            result[unixTimeMillis(date)] = str(date.strftime('%Y-%m-%d'))
-
-    return result
-
-
-# -- end: functions for (re)converting time data for slider -- #
-
-# -- functions for creating world graphs -- #
-
-def div_cases_deaths():
-    return html.Div(dcc.Graph(id='graph-with-slider-cases-deaths'),
-                    style={'width': '75%', 'padding': '0px 20px 20px 20px', 'float': 'left', 'display': 'inline-block'})
-
-
-def div_cases_deaths_per_million():
-    return html.Div(dcc.Graph(id='graph-with-slider-cases-deaths-per-million'),
-                    style={'width': '75%', 'padding': '0px 20px 20px 20px', 'float': 'left', 'display': 'inline-block'})
-
-
-def div_facilities():
-    return html.Div(dcc.Graph(id='graph-with-slider-facilities-deaths'),
-                    style={'width': '75%', 'padding': '0px 20px 20px 20px', 'float': 'left', 'display': 'inline-block'})
-
-
-# -- end: functions for creating world graphs -- #
-
-# -- functions for creating control elements for world graphs -- #
-
-# alternative for choosing the date for which the data is shown, use in combination with update_output(date)
-# def div_date_picker():
-#     return html.Div([
-#         (dcc.DatePickerSingle(
-#             id = 'date-picker-single',
-#             min_date_allowed = df_world.date.min(), # dt(1995, 8, 5),
-#             max_date_allowed = df_world.date.max(), # dt(2017, 9, 19),
-#             initial_visible_month = df_world.date.max(), # dt(2017, 8, 5),
-#             date = df_world.date.min())
-#         ),
-#         html.Div(id='output-container-date-picker-single')])
-
-def div_radio_axis_type(id, default, label):
-    """
-
-    :type id: str
-    :type default: must be 'Linear' or 'Log'
-    """
-    return html.Div([
-        html.Label(label),
-        dcc.RadioItems(
-            id=id,
-            options=[{'label': i, 'value': i} for i in ['Linear', 'Log']],
-            value=default,
-            labelStyle={'display': 'inline-block'}
-        )], style={'float': 'left', 'padding': '20px 20px 20px 20px'})
-
-
-# todo
-def div_panel(div):
-    """
-
-    :type div: list of 2 elements that should be shown together (e.g. selection for type of x- and y-axis)
-    """
-    return html.Div([
-        div[0],
-        div[1]
-    ]  # , style={'display': 'inline-block'}
-    )
-
-
-def div_slider():
-    # dcc.Sliders don't work with timestamps/dates, only with numeric values
-    return html.Div(dcc.Slider(
-
-        id='date-slider',
-        min=unixTimeMillis(daterange.min()),
-        max=unixTimeMillis(daterange.max()),
-        value=unixTimeMillis(daterange.max()),
-        # marks=getMarks(daterange.min(),
-        #                daterange.max(),7),
-        step=None,  # only dates selectable for which there is a mark entry
-        marks=getMarks(daterange.min(),
-                       daterange.max(), 14),
-        # data is available only 1x per day; restrict user to these steps
-        # else, no data being shown because no data exists e.g. for 2020-03-29 14:07:00
-        # step=unixTimeMillis(pd.to_timedelta(1, unit='d')), #TODO doesn't work because timedelta has no timetuple attribute
-        vertical=True
-    ), style={'width': '20%', 'padding': '0px 20px 20px 20px', 'float': 'right', 'display': 'inline-block'})
-
-
-# -- end: functions for creating control elements for world graphs -- #
-
 colors = {
     'background': '#111111',
     'text': '#7FDBFF'
@@ -531,7 +409,7 @@ layout = dict(
     height=500,
     font=dict(color=colors['text']),
     titlefont=dict(color=colors['text'], size='14'),
-    margin=dict(
+    padding=dict(
         l=35,
         r=35,
         b=35,
@@ -581,16 +459,13 @@ graph_options_dict = [{
     ''
 }]
 
-# components style
-# ------------ #
-
 fig.update_layout(plot_bgcolor=colors['background'], paper_bgcolor=colors['background'], font_color=colors['text'])
 
-# logo_filename = 'logo_upb.png'
-logo_filename = 'data/logo_upb.png'
-encoded_image = base64.b64encode(open(logo_filename, 'rb').read())
+logo_filename = 'https://hilfe.uni-paderborn.de/images/1/14/Uni-Kralle.png'
+encoded_image = base64.b64encode(http.request('GET', logo_filename).data)
 
-world_map = px.choropleth_mapbox(df, geojson=countries, locations='iso_code', featureidkey="properties.ISO_A3",
+df_map = df_world[df_world.location != "World"]
+world_map = px.choropleth_mapbox(df_map, geojson=countries, locations='iso_code', featureidkey="properties.ISO_A3",
                            color='total_cases',
                            color_continuous_scale="YlOrRd",
                            # range_color=(0, 1500000),
@@ -609,8 +484,8 @@ app.layout = html.Div([html.Div([
             html.Img(src='data:image/png;base64,{}'.format(encoded_image.decode()),
                      className='two columns',
                      style={
-                         'height': '20%',
-                         'width': '20%',
+                         'height': '13%',
+                         'width': '13%',
                          'float': 'left',
                          'position': 'relative',
                          'padding-top': 10,
@@ -621,7 +496,8 @@ app.layout = html.Div([html.Div([
                 'Covid-19 Information Center',
                 style={'font-family': 'Helvetica',
                        "margin-top": "50",
-                       "margin-bottom": "0"},
+                       "margin-bottom": "0",
+                       'padding': '35px'},
                 className='eight columns',
             ),
             html.P(
@@ -662,38 +538,12 @@ app.layout = html.Div([html.Div([
                                      {'label': location, 'value': location} for location in locations
                                  ],
                                  multi=False,
-                                 value='Country',
+                                 value='World',
                                  ),
                 ],
                 className='two columns',
                 style={'margin-top': '10'}
             ),
-            html.Div(
-                [
-                    html.P('Select metric for bar chart:'),
-                    dcc.Dropdown(
-                        id='metric_bar_chart',
-                        options=group_class,
-                        multi=False,
-                        value='Select'
-                    )
-                ],
-                className='two columns',
-                style={'margin-top': '10'}
-            ),
-            html.Div(
-                [
-                    html.P('Select a graph to be displayed:'),
-                    dcc.Dropdown(
-                        id='graph_selection_1',
-                        options=group_class,
-                        multi=False,
-                        value='Select'
-                    )
-                ],
-                className='two columns',
-                style={'margin-top': '10'}
-            )
         ],
         className='row'
     ),
@@ -702,8 +552,7 @@ app.layout = html.Div([html.Div([
         [
             html.Div(
                 [
-                    dcc.Graph(id='world-map',
-                              style={'margin-top': '20'})
+                    # world_map
                 ], className="six columns"
             ),
             html.Div(
@@ -729,7 +578,7 @@ app.layout = html.Div([html.Div([
                     dcc.Graph(id='line-graph',
                               figure={
                                   'data': [
-                                      {'x': dff['date'], 'y': dff['total_cases'],
+                                      {'x': df_world['date'], 'y': df_world['total_cases'],
                                        'range_x': ['2020-02-02', '2020-07-31'], 'type': 'line', 'name': 'total cases'}
                                   ],
                                   'layout': {'title': 'Total Coronavirus cases for World'},
@@ -737,11 +586,6 @@ app.layout = html.Div([html.Div([
                               style=layout_right,
                               ),
                 ], className="three columns"
-            ),
-            html.Div(
-                [
-                    dcc.Graph(id="graph-chart")
-                ], className="twelve columns"
             ),
         ], className="row"
     ),
@@ -797,15 +641,39 @@ app.layout = html.Div([html.Div([
 def set_location_options(selected_dataset):
     if selected_dataset == 'World':
         return [{'label': i, 'value': i} for i in locations]
-    if selected_dataset == 'Germany':
-        return [{'label': i, 'value': i} for i in bundeslaender]
+
 
 
 @app.callback(
-    dash.dependencies.Output('loc_dropdown', 'value'),
-    [dash.dependencies.Input('loc_dropdown', 'options')])
-def set_location_value(available_options):
-    return available_options[0]['value']
+    [Output(component_id='bar-graph', component_property='figure'),
+     Output(component_id='line-graph', component_property='figure')],
+    [Input(component_id='loc_dropdown', component_property='value')]
+)
+def update_graph(selected_option):
+    print(selected_option)
+
+    dff_new = df_world.copy()
+    print(dff_new)
+    dff_new = dff_new[dff_new['location'] == selected_option]
+    print(dff)
+    figure = {
+        'data': [
+            {'x': dff_new['date'], 'y': abs(dff_new['new_cases']), 'range_x': ['2020-02-02', '2020-07-31'],
+             'type': 'bar', 'name': 'cases'}
+        ],
+        'layout': {
+            'title': 'Daily new cases for {}'.format(selected_option)}
+    }
+    line_figure = {
+        'data': [
+            {'x': dff_new['date'], 'y': abs(dff_new['total_cases']), 'range_x': ['2020-02-02', '2020-07-31'],
+             'type': 'line', 'name': 'total cases'}
+        ],
+        'layout': {
+            'title': 'Total Coronavirus cases for {}'.format(selected_option)}
+    }
+
+    return figure, line_figure
 
 
 @app.callback(
