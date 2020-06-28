@@ -12,6 +12,7 @@ app = dash.Dash(__name__)
 ts = lambda dt64: datetime.utcfromtimestamp((dt64 - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's'))
 
 df_germany = pd.read_pickle('./../data/data_germany.pickle').drop_duplicates('ObjectId')
+bundeslaender = set(df_germany.loc[pd.IndexSlice[:, :], "Bundesland"])
 
 all_dates = sorted(set(df_germany.index.get_level_values(1)))
 alle_langkreise = sorted(set(df_germany.index.get_level_values(0)))
