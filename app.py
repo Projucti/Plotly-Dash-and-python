@@ -574,6 +574,18 @@ app.layout = html.Div([
 #     return fig
 
 @app.callback(
+    dash.dependencies.Output('loc_dropdown', 'options'),
+    [dash.dependencies.Input('Dataset', 'value')])
+def set_location_options(selected_dataset):
+    return [{'label': i, 'value': i} for i in locations[selected_dataset]]
+
+@app.callback(
+    dash.dependencies.Output('loc_dropdown', 'value'),
+    [dash.dependencies.Input('Dataset', 'value')])
+def set_location_value(available_options):
+    return available_options[0]['value']
+
+@app.callback(
     Output('graph-with-slider-cases-deaths', 'figure'),
     [Input('date-slider', 'value'),
      Input('x_cases_death', 'value'),
