@@ -619,9 +619,7 @@ app.layout = html.Div([html.Div([
     # ]),
     # div_facilities(),
 
-    # for variable world graphs
-    div_radio_axis_type('xaxis-type', 'Linear', 'horizontal axis:'), # - RadioBox lin/log with id='xaxis-type', name ('horizontal...') can be anything
-    div_radio_axis_type('yaxis-type', 'Linear', 'vertical axis:'),   # - RadioBox lin/log with id='yaxis-type'
+
     # - dropdown menu with id='xaxis-column'
     # - dropdown menu with id='yaxis-column'
     html.Div(
@@ -644,8 +642,13 @@ app.layout = html.Div([html.Div([
                 value='total_deaths'
             )
         ]),
-    dcc.Graph(id='graph_1') # for displaying 1 of my possible graphs
+    dcc.Graph(id='graph_1'), # for displaying 1 of my possible graphs
 
+    # for variable world graphs
+    div_panel([
+        div_radio_axis_type('xaxis-type', 'Linear', 'horizontal axis:'), # - RadioBox lin/log with id='xaxis-type', name ('horizontal...') can be anything
+        div_radio_axis_type('yaxis-type', 'Linear', 'vertical axis:')   # - RadioBox lin/log with id='yaxis-type'
+    ])
 
 ], className='ten columns offset-by-one'), get_germany_intital_layout()])
 
