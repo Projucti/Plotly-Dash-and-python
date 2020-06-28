@@ -1,11 +1,11 @@
+import time
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
 import plotly.express as px
 from dash.dependencies import Input, Output
-import time
-
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -14,7 +14,7 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 world_url = "https://covid.ourworldindata.org/data/owid-covid-data.csv"
 df_world = pd.read_csv(world_url)
 df_world['date'] = pd.to_datetime(df_world['date'])
-daterange = pd.date_range(start=df_world['date'].min(),end=df_world['date'].max())
+daterange = pd.date_range(start=df_world['date'].min(), end=df_world['date'].max())
 
 features = [df_world[column] for column in df_world]
 
@@ -26,11 +26,12 @@ def unixTimeMillis(dt):
     ''' Convert datetime to unix timestamp '''
     return int(time.mktime(dt.timetuple()))
 
+
 def unixToDatetime(unix):
     ''' Convert unix timestamp to datetime. '''
     # off by 2 hours for dates after 29.3.2020 (i.e., calculates day prior, 22h),
     # before that, off by 1 hour
-    off = pd.to_datetime(unix,unit='s')
+    off = pd.to_datetime(unix, unit='s')
     date_clock_change1 = pd.to_datetime('2020-03-29')
     date_clock_change2 = pd.to_datetime('2020-10-25')
     # TODO using these conditions, app will only work until 27.3.2021 (next change to summer time)
@@ -48,7 +49,7 @@ def getMarks(start, end, Nth):
 
     result = {}
     for i, date in enumerate(daterange):
-        if(i%Nth == 1):
+        if (i % Nth == 1):
             # Append value to dict
             result[unixTimeMillis(date)] = str(date.strftime('%Y-%m-%d'))
 
@@ -86,7 +87,7 @@ def div_radio_axis_type(id, default, label):
         )], style={'float': 'left', 'padding': '20px 20px 20px 20px'})
 
 
-#todo
+# todo
 def div_panel(div):
     """
 
@@ -95,7 +96,7 @@ def div_panel(div):
     return html.Div([
         div[0],
         div[1]
-        ]#, style={'display': 'inline-block'}
+    ]  # , style={'display': 'inline-block'}
     )
 
 
@@ -104,17 +105,17 @@ def div_slider():
     return html.Div(dcc.Slider(
 
         id='date-slider',
-        min = unixTimeMillis(daterange.min()),
-        max = unixTimeMillis(daterange.max()),
-        value = unixTimeMillis(daterange.max()),
+        min=unixTimeMillis(daterange.min()),
+        max=unixTimeMillis(daterange.max()),
+        value=unixTimeMillis(daterange.max()),
         # marks=getMarks(daterange.min(),
         #                daterange.max(),7),
-        step=None, # only dates selectable for which there is a mark entry
+        step=None,  # only dates selectable for which there is a mark entry
         marks=getMarks(daterange.min(),
-                       daterange.max(),14),
+                       daterange.max(), 14),
         # data is available only 1x per day; restrict user to these steps
         # else, no data being shown because no data exists e.g. for 2020-03-29 14:07:00
-        #step=unixTimeMillis(pd.to_timedelta(1, unit='d')), #TODO doesn't work because timedelta has no timetuple attribute
+        # step=unixTimeMillis(pd.to_timedelta(1, unit='d')), #TODO doesn't work because timedelta has no timetuple attribute
         vertical=True
     ), style={'width': '20%', 'padding': '0px 20px 20px 20px', 'float': 'right', 'display': 'inline-block'})
 
@@ -183,7 +184,7 @@ def update_figure_per_million(selected_date, xaxis_type, yaxis_type):
                      x='total_cases_per_million',
                      y='total_deaths_per_million',
                      color=filtered_df.continent,
-                     #animation_frame='date',
+                     # animation_frame='date',
                      hover_name=filtered_df.location,
                      hover_data=['population', 'hospital_beds_per_thousand', 'extreme_poverty']
                      )
@@ -214,7 +215,8 @@ def update_figure_facilities(selected_date, xaxis_type, yaxis_type):
                      hover_data=['total_deaths', 'population', 'hospital_beds_per_thousand', 'extreme_poverty']
                      )
 
-    fig.update_xaxes(title='percentage of population with basic handwashing facilities', type='linear' if xaxis_type == 'Linear' else 'log')
+    fig.update_xaxes(title='percentage of population with basic handwashing facilities',
+                     type='linear' if xaxis_type == 'Linear' else 'log')
     fig.update_yaxes(type='linear' if yaxis_type == 'Linear' else 'log')
     fig.update_layout(transition_duration=500)
 

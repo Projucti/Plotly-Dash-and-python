@@ -1,6 +1,7 @@
 import pandas as pd
 from matplotlib import pyplot as plt
 from datetime import datetime
+import json
 plt.style.use("ggplot")
 
 def downlaod_data():
@@ -71,4 +72,4 @@ def preprocess_and_laod_germany_data():
     return df_rki
 
 if __name__ == '__main__':
-    print(preprocess_and_laod_germany_data())
+    preprocess_and_laod_germany_data().to_pickle("data_gerrmany.pickle")
