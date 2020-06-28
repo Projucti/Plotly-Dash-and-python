@@ -25,6 +25,10 @@ with open('./data/countries.geojson') as response:
 df = pd.read_csv('./data/wdata.csv')
 df = df[df.location != "World"]
 print(list(df.columns))
+
+logo_filename = './data/logo_upb.png'
+encoded_image = base64.b64encode(open(logo_filename, 'rb').read())
+
 # -- data end -- #
 
 colors = {
@@ -85,9 +89,6 @@ group_class = [{'label': str(item),
 
 fig.update_layout(plot_bgcolor=colors['background'], paper_bgcolor=colors['background'], font_color=colors['text'])
 
-logo_filename = 'logo_upb.png'
-encoded_image = base64.b64encode(open(logo_filename, 'rb').read())
-
 fig = px.choropleth_mapbox(df, geojson=countries, locations='iso_code', featureidkey="properties.ISO_A3",
                            color='total_cases',
                            color_continuous_scale="YlOrRd",
@@ -144,23 +145,37 @@ app.layout = html.Div([
                             id = 'Dataset',
                             options=[
                                 {'label': 'World', 'value': 'world-data'},
-                                {'label': 'Germany', 'value': 'RKI-data'},
+                                {'label': 'Germany', 'value': 'rki-data'},
                             ],
                             value=['World', 'Germany'],
                             labelStyle={'display': 'inline-block'}
                     ),
                 ],
-                className='six columns',
+                className='three columns',
                 style={'margin-top': '10'}
             ),
             html.Div(
                 [
-                    html.P('DOE Need:'),
+                    html.P('Choose Country:'),
+                    dcc.Dropdown(id='loc_dropdown',
+                        options=[
+                        {'label': location, 'value': location} for location in locations
+                        ],
+                        multi=False,
+                        value='Country',
+                    ),
+                ],
+                className='two columns',
+                style={'margin-top': '10'}
+             ), 
+            html.Div(
+                [
+                    html.P('Select metric for bar chart:'),
                     dcc.Dropdown(
-                        id='DOE',
+                        id='metric_bar_chart',
                         options= group_class,
                         multi=False,
-                        value='All'
+                        value='Select'
                     )
                 ],
                 className='two columns',
@@ -168,25 +183,12 @@ app.layout = html.Div([
             ),
             html.Div(
                 [
-                    html.P('Crime BIN (group):'),
+                    html.P('Select metric for line chart:'),
                     dcc.Dropdown(
-                        id='Crime',
+                        id='metric_line_chart',
                         options= group_class,
                         multi=False,
-                        value='All'
-                    )
-                ],
-                className='two columns',
-                style={'margin-top': '10'}
-            ),
-            html.Div(
-                [
-                    html.P('Obesity BIN (group):'),
-                    dcc.Dropdown(
-                        id='Obesity',
-                        options= group_class,
-                        multi=False,
-                        value='All'
+                        value='Select'
                     )
                 ],
                 className='two columns',
@@ -214,7 +216,9 @@ app.layout = html.Div([
                             ],
                             'layout': {'title': 'Daily new cases for World'},
                         },
-                        style=layout_right,
+                        style={'font-family': 'Helvetica',
+                       "font-size": "120%",
+                       "width": "80%"},
                     ),
                 ], className="three columns"
             ),
@@ -245,7 +249,6 @@ app.layout = html.Div([
 # ---------- #
 
 # callbacks and functions
-
 # ---------- # 
 
 if __name__ == '__main__':
