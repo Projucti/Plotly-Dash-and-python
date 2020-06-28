@@ -135,11 +135,11 @@ def get_germany_intital_layout():
             dcc.Dropdown(
                 id='cause-dropdown',
                 options=[
-                    {'label': 'Registrierte Fälle', 'value': 'AnzahlFall,NeuerFall,Registered Cases'},
-                    {'label': 'Genese Fälle', 'value': 'AnzahlGenesen,NeuGenesen,Recovered people'},
-                    {'label': 'Todesfälle', 'value': 'AnzahlTodesfall,NeuerTodesfall,Numbers of deaths'},
+                    {'label': 'Registered Cases', 'value': 'AnzahlFall,NeuerFall,Registered Cases'},
+                    {'label': 'Recovered people', 'value': 'AnzahlGenesen,NeuGenesen,Recovered people'},
+                    {'label': 'Numbers of deaths', 'value': 'AnzahlTodesfall,NeuerTodesfall,Numbers of deaths'},
                 ],
-                value='AnzahlFall,NeuerFall,Registrierte Fälle',
+                value='AnzahlFall,NeuerFall,Registered Cases',
                 multi=False,
             ),
             style={'width': '50%', 'font-family': 'Arial'}
