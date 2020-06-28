@@ -67,7 +67,7 @@ def reformat_box_y(start_date, end_date, locs, col_name, indicator_col):
 def get_germany_intital_layout():
     return html.Div([
 
-        html.H1("Number of cases in Germany by county", style={'text-align': 'center', 'font-family': 'Arial'}),
+        html.H1("Cases in Germany by county", style={'text-align': 'center', 'font-family': 'Arial'}),
         html.Div([
             html.Div(
                 dcc.DatePickerRange(
