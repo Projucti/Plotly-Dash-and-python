@@ -90,11 +90,11 @@ app.layout = html.Div([
         dcc.Dropdown(
             id='cause-dropdown',
             options=[
-                    {'label': 'Registrierte Fälle', 'value': 'AnzahlFall,NeuerFall'},
-                    {'label': 'Genese Fälle', 'value': 'AnzahlGenesen,NeuGenesen'},
-                    {'label': 'Todesfälle', 'value': 'AnzahlTodesfall,NeuerTodesfall'},
+                    {'label': 'Registrierte Fälle', 'value': 'AnzahlFall,NeuerFall,Registrierte Fälle'},
+                    {'label': 'Genese Fälle', 'value': 'AnzahlGenesen,NeuGenesen,Genesene Personen'},
+                    {'label': 'Todesfälle', 'value': 'AnzahlTodesfall,NeuerTodesfall,Todesfälle'},
             ],
-            value='AnzahlFall,NeuerFall',
+            value='AnzahlFall,NeuerFall,Registrierte Fälle',
             multi=False,
         ),
         style={'width': '50%'}
@@ -150,7 +150,8 @@ def update_graph(start_date, end_date, locs, cause):
     if start_date is None:
         start_date = earliest_date
 
-    cause_col, cause_indiator = cause.split(',')
+    cause_col, cause_indiator, title = cause.split(',')
+    print(title)
     general_loc = df.loc[pd.IndexSlice[5774, :], :]
     age = general_loc[general_loc[cause_indiator].isin([0, 1])].groupby(['Altersgruppe']).sum()[cause_col]
     possible_keys_age = ['A00-A04', 'A05-A14', 'A15-A34', 'A35-A59', 'A60-A79', 'A80+']
@@ -205,13 +206,13 @@ def update_graph(start_date, end_date, locs, cause):
         names=age.index,
         values=age,
         hole=.3,
-        title='Meldungen nach Altersgruppe'
+        title=f'{title} nach Altersgruppe'
     )
     pie_gender = px.pie(
         data_frame=gender,
         names=gender.index,
         values=gender,
-        title='Meldungen nach Geschlecht',
+        title=f'{title} nach Geschlecht',
         hole=.3,
     )
     return line_figure, bar_figure, pie_age, pie_gender
