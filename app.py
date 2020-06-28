@@ -577,11 +577,14 @@ app.layout = html.Div([
     dash.dependencies.Output('loc_dropdown', 'options'),
     [dash.dependencies.Input('Dataset', 'value')])
 def set_location_options(selected_dataset):
-    return [{'label': i, 'value': i} for i in locations[selected_dataset]]
+    if selected_dataset == 'World':
+        return [{'label': i, 'value': i} for i in locations]
+    if selected_dataset == 'Germany':
+        return [{'label': i, 'value': i} for i in german_locations]
 
 @app.callback(
     dash.dependencies.Output('loc_dropdown', 'value'),
-    [dash.dependencies.Input('Dataset', 'value')])
+    [dash.dependencies.Input('loc_dropdown', 'options')])
 def set_location_value(available_options):
     return available_options[0]['value']
 
