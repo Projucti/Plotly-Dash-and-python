@@ -519,25 +519,16 @@ app.layout = html.Div([html.Div([
         ],
         className='row'
     ),
+    # map
+    html.Div(
+        [
+            dcc.Graph(figure=world_map)
+        ]
+    ),
+
     # Selection
     html.Div(
         [
-            html.Div(
-                [
-                    html.P('Choose Dataset:'),
-                    dcc.RadioItems(
-                        id='Dataset',
-                        options=[
-                            {'label': 'World', 'value': 'World'},
-                            {'label': 'Germany', 'value': 'Germany'},
-                        ],
-                        value='World',
-                        labelStyle={'display': 'inline-block'}
-                    ),
-                ],
-                className='three columns',
-                style={'margin-top': '10'}
-            ),
             html.Div(
                 [
                     html.P('Choose Country:'),
@@ -554,11 +545,6 @@ app.layout = html.Div([html.Div([
             ),
         ],
         className='row'
-    ),
-    html.Div(
-        [
-            dcc.Graph(figure=world_map)
-        ]
     ),
 
     # bar and line chart
@@ -708,14 +694,6 @@ def update_graph_1(x_axis_column, y_axis_column,
     fig.update_layout(transition_duration=500)
 
     return fig
-
-
-@app.callback(
-    dash.dependencies.Output('loc_dropdown', 'options'),
-    [dash.dependencies.Input('Dataset', 'value')])
-def set_location_options(selected_dataset):
-    if selected_dataset == 'World':
-        return [{'label': i, 'value': i} for i in locations]
 
 
 
