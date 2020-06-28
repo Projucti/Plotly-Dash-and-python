@@ -47,7 +47,7 @@ features = [df_world[column] for column in df_world]
 # -- TODO is df necessary? df: dataframe originally in app.py -- #
 df = pd.read_csv(world_url)
 df = df[df.location != "World"]
-print(list(df.columns))
+# print(list(df.columns))
 
 logo_filename = './data/logo_upb.png'
 encoded_image = base64.b64encode(open(logo_filename, 'rb').read())
@@ -354,9 +354,18 @@ dff = df.copy()
 dff = dff[dff['location'] == 'World']
 group = ['All']
 group = group + ['Low', 'Medium', 'High', 'Very High']
+graph_options = ['total_cases vs. total_deaths',
+                 'total_cases_per_million vs. total_deaths_per_million',
+                 'handwashing_facilities vs. total_cases_per_million']
 group_class = [{'label': str(item),
                       'value': str(item)}
-                     for item in group]
+                     for item in graph_options] # in group]
+
+
+graph_options_dict = [{
+    #TODO along group_class
+    ''
+}]
 
 
 # components style
@@ -462,9 +471,9 @@ app.layout = html.Div([
             ),
             html.Div(
                 [
-                    html.P('Select metric for line chart:'),
+                    html.P('Select a graph to be displayed:'),
                     dcc.Dropdown(
-                        id='metric_line_chart',
+                        id='graph_selection_1',
                         options= group_class,
                         multi=False,
                         value='Select'
@@ -549,6 +558,20 @@ app.layout = html.Div([
 # ---------- #
 
 # -- callbacks and functions -- #
+
+# TODO callback 
+# @app.callback(
+#     Output('graph_1', 'figure'),
+#     # [Input('xaxis-column', 'value'),
+#     #  Input('yaxis-column', 'value'),
+#     #  Input('xaxis-type', 'value'),
+#     #  Input('yaxis-type', 'value'),
+#     #  Input('year--slider', 'value')]
+#     [Input('graph-id', 'value')]
+# )
+# def update_graph(graph_option):
+#     fig = ...
+#     return fig
 
 @app.callback(
     Output('graph-with-slider-cases-deaths', 'figure'),
