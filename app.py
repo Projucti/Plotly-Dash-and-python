@@ -21,7 +21,7 @@ from dash.dependencies import Input, Output
 # import re
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-# external_stylesheets = ['https://cdn.rawgit.com/plotly/dash-app-stylesheets/2d266c578d2a6e8850ebce48fdb52759b2aef506/stylesheet-oil-and-gas.css']
+external_stylesheets = ['https://cdn.rawgit.com/plotly/dash-app-stylesheets/2d266c578d2a6e8850ebce48fdb52759b2aef506/stylesheet-oil-and-gas.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
@@ -34,7 +34,7 @@ for _, _, files in os.walk("./data", topdown=False):
     else:
         df_germany = preprocess_and_laod_germany_data().drop_duplicates('ObjectId')
 
-
+bundeslaender = list(set(df_germany.loc[pd.IndexSlice[:, :], "Bundesland"]))
 all_dates = sorted(set(df_germany.index.get_level_values(1)))
 alle_langkreise = sorted(set(df_germany.index.get_level_values(0)))
 earliest_date, last_date = all_dates[0], all_dates[-1]
@@ -67,7 +67,7 @@ def reformat_box_y(start_date, end_date, locs, col_name, indicator_col):
 def get_germany_intital_layout():
     return html.Div([
 
-        html.H1("Fallzahlen Deutschland nach Landkreisen", style={'text-align': 'center', 'font-family': 'Arial'}),
+        html.H1("Number of cases in Germany by county", style={'text-align': 'center', 'font-family': 'Arial'}),
         html.Div([
             html.Div(
                 dcc.DatePickerRange(
@@ -100,7 +100,7 @@ def get_germany_intital_layout():
                          'name': 'new cases'}
                     ],
                     'layout': {
-                        'title': 'Kumulative Fälle'}
+                        'title': 'Cummulative cases'}
                 }
             ),
         ),
@@ -121,7 +121,7 @@ def get_germany_intital_layout():
                     ],
 
                     'layout': {
-                        'title': 'Tägliche Veränderung',
+                        'title': 'Daily change',
 
                     }
                 }
@@ -131,9 +131,9 @@ def get_germany_intital_layout():
             dcc.Dropdown(
                 id='cause-dropdown',
                 options=[
-                    {'label': 'Registrierte Fälle', 'value': 'AnzahlFall,NeuerFall,Registrierte Fälle'},
-                    {'label': 'Genese Fälle', 'value': 'AnzahlGenesen,NeuGenesen,Genesene Personen'},
-                    {'label': 'Todesfälle', 'value': 'AnzahlTodesfall,NeuerTodesfall,Todesfälle'},
+                    {'label': 'Registrierte Fälle', 'value': 'AnzahlFall,NeuerFall,Registered Cases'},
+                    {'label': 'Genese Fälle', 'value': 'AnzahlGenesen,NeuGenesen,Recovered people'},
+                    {'label': 'Todesfälle', 'value': 'AnzahlTodesfall,NeuerTodesfall,Numbers of deaths'},
                 ],
                 value='AnzahlFall,NeuerFall,Registrierte Fälle',
                 multi=False,
@@ -179,7 +179,7 @@ def germany_update_graph(start_date, end_date, locs, cause):
 
     gender = general_loc[general_loc[cause_indiator].isin([0, 1])].groupby(['Geschlecht']).sum()[cause_col]
     possible_genders = ['M', 'W', 'unbekannt']
-    gender_new = ['👱🏻‍♂️ M', '👸🏼 W', 'unbekannt']
+    gender_new = ['👱🏻‍♂️ Male', '👸🏼 Female', 'unknown']
     gender_mapping = dict(zip(possible_genders, gender_new))
     gender.index = [gender_mapping[key] for key in gender.index]
 
@@ -190,33 +190,33 @@ def germany_update_graph(start_date, end_date, locs, cause):
         'data': [
             {'x': x, 'y': reformat_line_y(start_date, end_date, locs, "Kumulative Fälle"),
              'range_x': [x[0], x[-1]], 'type': 'line',
-             'name': '🤒 Kumulative Fälle'},
+             'name': '🤒 Cumulative Infections'},
             {'x': x, 'y': reformat_line_y(start_date, end_date, locs, "Kumulative Genesene"),
              'range_x': [x[0], x[-1]], 'type': 'line',
-             'name': '🤗 Kumulative Genesene'},
+             'name': '🤗 Cumulative recovered'},
             {'x': x, 'y': reformat_line_y(start_date, end_date, locs, "Kumulative Todefälle"),
              'range_x': [x[0], x[-1]], 'type': 'line',
-             'name': '💀 Kumulative Todefälle'}
+             'name': '💀 Cumulative number of deaths'}
         ],
         'layout': {
-            'title': f'📈 Kumulative Fälle in {current_kreis}'}
+            'title': f'📈 Cumulative cases in {current_kreis}'}
     }
     bar_figure = {
         'data': [
 
             {'x': x, 'y': reformat_box_y(start_date, end_date, locs, 'AnzahlFall', 'NeuerFall'),
              'range_x': [x[0], x[-1]], 'type': 'bar',
-             'name': '🤒 Neue Fälle'},
+             'name': '🤒 New infections'},
 
             {'x': x, 'y': reformat_box_y(start_date, end_date, locs, 'AnzahlGenesen', 'NeuGenesen'),
              'range_x': [x[0], x[-1]], 'type': 'bar',
-             'name': '🤗 Anzahl genesen'},
+             'name': '🤗 Recovered'},
             {'x': x, 'y': reformat_box_y(start_date, end_date, locs, 'AnzahlTodesfall', 'NeuerTodesfall'),
              'range_x': [x[0], x[-1]], 'type': 'bar',
-             'name': '💀 Anzahl der Todesfälle'}
+             'name': '💀 Number of deaths'}
         ],
         'layout': {
-            'title': f'📆 Tägeliche Veränderungen in {current_kreis}'},
+            'title': f'📆 Daily change in {current_kreis}'},
     }
 
     pie_age = px.pie(
@@ -224,13 +224,13 @@ def germany_update_graph(start_date, end_date, locs, cause):
         names=age.index,
         values=age,
         hole=.3,
-        title=f'👶🏼 / 👵🏻 {title} nach Altersgruppe in {current_kreis}'
+        title=f'👶🏼 / 👵🏻 {title} by age in {current_kreis}'
     )
     pie_gender = px.pie(
         data_frame=gender,
         names=gender.index,
         values=gender,
-        title=f'👸🏼 / 🤴🏻 {title} nach Geschlecht in {current_kreis}',
+        title=f'👸🏼 / 🤴🏻 {title} by gender in {current_kreis}',
         hole=.3,
     )
     return line_figure, bar_figure, pie_age, pie_gender
@@ -590,7 +590,7 @@ fig.update_layout(plot_bgcolor=colors['background'], paper_bgcolor=colors['backg
 logo_filename = 'data/logo_upb.png'
 encoded_image = base64.b64encode(open(logo_filename, 'rb').read())
 
-fig = px.choropleth_mapbox(df, geojson=countries, locations='iso_code', featureidkey="properties.ISO_A3",
+world_map = px.choropleth_mapbox(df, geojson=countries, locations='iso_code', featureidkey="properties.ISO_A3",
                            color='total_cases',
                            color_continuous_scale="YlOrRd",
                            # range_color=(0, 1500000),
@@ -599,7 +599,7 @@ fig = px.choropleth_mapbox(df, geojson=countries, locations='iso_code', featurei
                            opacity=0.6,
                            labels={'total_cases': 'Number of total cases'}
                            )
-fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+world_map.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 
 # app layout
 app.layout = html.Div([html.Div([
