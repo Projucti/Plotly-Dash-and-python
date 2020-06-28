@@ -555,7 +555,13 @@ app.layout = html.Div([html.Div([
         ],
         className='row'
     ),
-    # map, bar and line chart
+    html.Div(
+        [
+            dcc.Graph(figure=world_map)
+        ]
+    ),
+
+    # bar and line chart
     html.Div(
         [
             html.Div(
