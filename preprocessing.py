@@ -60,15 +60,16 @@ def get_cumulative_cases(df_rki, column_to_sum_up, column_indicator, target_colu
     return df_rki.join(df_fälle_landkreise_melt).fillna(0).convert_dtypes()
 
 def preprocess_and_laod_germany_data():
+    print('Startinig download and preprocessing the data...')
     df_rki = reduce_berlin(downlaod_data())
-    print(df_rki.shape)
     df_rki = get_cumulative_cases(df_rki, 'AnzahlFall', 'NeuerFall', 'Kumulative Fälle')
     df_rki = get_cumulative_cases(df_rki, 'AnzahlGenesen', 'NeuGenesen', 'Kumulative Genesene')
     df_rki = get_cumulative_cases(df_rki, 'AnzahlTodesfall', 'NeuerTodesfall', 'Kumulative Todefälle')
-    kreis_mapping = read_kreis_mapping()
-    df_rki = per_einwohner(df_rki, kreis_mapping, "Kumulative Fälle", "Fälle/100k_Einwohner")
+    # kreis_mapping = read_kreis_mapping()
+    # df_rki = per_einwohner(df_rki, kreis_mapping, "Kumulative Fälle", "Fälle/100k_Einwohner")
     # df_rki = per_einwohner(df_rki, kreis_mapping, "Kumulative Genesene", "Genesene/100k_Einwohner")
     # df_rki = per_einwohner(df_rki, kreis_mapping, "Kumulative Todefälle", "Tote/100k_Einwohner")
+    print('Finished download and preprocessing the data...')
     return df_rki
 
 if __name__ == '__main__':

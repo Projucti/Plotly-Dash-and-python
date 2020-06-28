@@ -6,6 +6,7 @@ import dash_html_components as html
 import numpy as np
 import pandas as pd
 import plotly.express as px
+from preprocessing import preprocess_and_laod_germany_data
 from dash.dependencies import Input, Output
 
 app = dash.Dash(__name__)

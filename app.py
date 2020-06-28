@@ -2,6 +2,7 @@
 import base64
 import copy
 import json
+import os
 import time
 import urllib.request
 # the following two are necessary, if date is chosen using a calendar:
@@ -14,6 +15,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from preprocessing import preprocess_and_laod_germany_data
 from dash.dependencies import Input, Output
 
 # import re
@@ -26,7 +28,12 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 ##### GERMANY #####
 ts = lambda dt64: datetime.utcfromtimestamp((dt64 - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's'))
 
-df_germany = pd.read_pickle('./data/data_germany.pickle').drop_duplicates('ObjectId')
+for _, _, files in os.walk("./data", topdown=False):
+    if 'data_germany.pickle' in (files):
+        df_germany = pd.read_pickle('./data/data_germany.pickle').drop_duplicates('ObjectId')
+    else:
+        df_germany = preprocess_and_laod_germany_data().drop_duplicates('ObjectId')
+
 
 all_dates = sorted(set(df_germany.index.get_level_values(1)))
 alle_langkreise = sorted(set(df_germany.index.get_level_values(0)))
