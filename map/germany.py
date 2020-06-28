@@ -11,15 +11,15 @@ from dash.dependencies import Input, Output
 app = dash.Dash(__name__)
 ts = lambda dt64: datetime.utcfromtimestamp((dt64 - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's'))
 
-df = pd.read_pickle('./../data/data_germany.pickle').drop_duplicates('ObjectId')
+df_germany = pd.read_pickle('./../data/data_germany.pickle').drop_duplicates('ObjectId')
 
-all_dates = sorted(set(df.index.get_level_values(1)))
-alle_langkreise = sorted(set(df.index.get_level_values(0)))
+all_dates = sorted(set(df_germany.index.get_level_values(1)))
+alle_langkreise = sorted(set(df_germany.index.get_level_values(0)))
 earliest_date, last_date = all_dates[0], all_dates[-1]
 
 print(f"Frühster Tag: {earliest_date} {type(earliest_date)}\nSpätester Tag: {last_date}")
 
-landkreis_options = [{'label': df.loc[lk, :].iloc[0, :]["Landkreis"] + f' ({lk})', 'value': lk} for lk in
+landkreis_options = [{'label': df_germany.loc[lk, :].iloc[0, :]["Landkreis"] + f' ({lk})', 'value': lk} for lk in
                      alle_langkreise]
 print(len(landkreis_options))
 
@@ -53,7 +53,7 @@ app.layout = html.Div([
             id='line-graph',
             figure={
                 'data': [
-                    {'x': all_dates, 'y': df.loc[pd.IndexSlice[1001, :], "Kumulative Fälle"],
+                    {'x': all_dates, 'y': df_germany.loc[pd.IndexSlice[1001, :], "Kumulative Fälle"],
                      'range_x': [str(earliest_date), str(last_date)], 'type': 'line',
                      'name': 'new cases'}
                 ],
@@ -61,20 +61,19 @@ app.layout = html.Div([
                     'title': 'Kumulative Fälle'}
             }
         ),
-        # style={'float': 'left', 'position': 'relative', 'width': '50%'}
     ),
     html.Div(
         dcc.Graph(
             id='bar-graph',
             figure={
                 'data': [
-                    {'x': all_dates, 'y': df.loc[pd.IndexSlice[1001, :], "AnzahlFall"],
+                    {'x': all_dates, 'y': df_germany.loc[pd.IndexSlice[1001, :], "AnzahlFall"],
                      'range_x': [str(earliest_date), str(last_date)], 'type': 'bar',
                      'name': 'Neue Fälle'},
-                    {'x': all_dates, 'y': df.loc[pd.IndexSlice[1001, :], "AnzahlGenesen"],
+                    {'x': all_dates, 'y': df_germany.loc[pd.IndexSlice[1001, :], "AnzahlGenesen"],
                      'range_x': [str(earliest_date), str(last_date)], 'type': 'bar',
                      'name': 'Anzahl genesen'},
-                    {'x': all_dates, 'y': df.loc[pd.IndexSlice[1001, :], "AnzahlTodesfall"],
+                    {'x': all_dates, 'y': df_germany.loc[pd.IndexSlice[1001, :], "AnzahlTodesfall"],
                      'range_x': [str(earliest_date), str(last_date)], 'type': 'bar',
                      'name': 'Anzahl der Todesfälle'}
                 ],
@@ -113,7 +112,7 @@ app.layout = html.Div([
 
 def reformat_line_y(start_date, end_date, locs, col_name):
     start_date, end_date = pd.to_datetime(start_date), pd.to_datetime(end_date)
-    y: pd.Series = df.loc[locs, :][col_name].drop_duplicates()
+    y: pd.Series = df_germany.loc[locs, :][col_name].drop_duplicates()
     y.loc[start_date] = 0
     y.loc[end_date] = y[-2]
     y = y.sort_index()
@@ -123,7 +122,7 @@ def reformat_line_y(start_date, end_date, locs, col_name):
 
 def reformat_box_y(start_date, end_date, locs, col_name, indicator_col):
     start_date, end_date = pd.to_datetime(start_date), pd.to_datetime(end_date)
-    y: pd.Series = df[df[indicator_col].isin([0, 1])].loc[pd.IndexSlice[locs, :], [col_name]].groupby(
+    y: pd.Series = df_germany[df_germany[indicator_col].isin([0, 1])].loc[pd.IndexSlice[locs, :], [col_name]].groupby(
         ['Meldedatum']).sum().iloc[:, 0]
     y.loc[start_date] = 0
     y.loc[end_date] = y[-2]
@@ -143,16 +142,14 @@ def reformat_box_y(start_date, end_date, locs, col_name, indicator_col):
      Input(component_id='cause-dropdown', component_property='value')]
 )
 def update_graph(start_date, end_date, locs, cause):
-    print(cause)
-    current_kreis = df.loc[locs, :].iloc[0, :]["Landkreis"]
+    current_kreis = df_germany.loc[locs, :].iloc[0, :]["Landkreis"]
     if locs is None:
         locs = 5766
     if start_date is None:
         start_date = earliest_date
 
     cause_col, cause_indiator, title = cause.split(',')
-    print(title)
-    general_loc = df.loc[pd.IndexSlice[5774, :], :]
+    general_loc = df_germany.loc[pd.IndexSlice[5774, :], :]
     age = general_loc[general_loc[cause_indiator].isin([0, 1])].groupby(['Altersgruppe']).sum()[cause_col]
     possible_keys_age = ['A00-A04', 'A05-A14', 'A15-A34', 'A35-A59', 'A60-A79', 'A80+']
     age_new = ['👶🏼 0-4', '👧🏼 5-14', '👱🏻‍♀ 15-34', '👨🏻 35-59', '👴🏻 60-79', '👵🏻 80+']
@@ -206,13 +203,13 @@ def update_graph(start_date, end_date, locs, cause):
         names=age.index,
         values=age,
         hole=.3,
-        title=f'👶🏼/👵🏻 {title} nach Altersgruppe in {current_kreis}'
+        title=f'👶🏼 / 👵🏻 {title} nach Altersgruppe in {current_kreis}'
     )
     pie_gender = px.pie(
         data_frame=gender,
         names=gender.index,
         values=gender,
-        title=f'👸🏼/🤴🏻 {title} nach Geschlecht in {current_kreis}',
+        title=f'👸🏼 / 🤴🏻 {title} nach Geschlecht in {current_kreis}',
         hole=.3,
     )
     return line_figure, bar_figure, pie_age, pie_gender
