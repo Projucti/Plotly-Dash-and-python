@@ -1,10 +1,11 @@
 from datetime import datetime
 
-import dash  # (version 1.12.0) pip install dash
+import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import numpy as np
 import pandas as pd
+import plotly.express as px
 from dash.dependencies import Input, Output
 
 app = dash.Dash(__name__)
@@ -84,7 +85,28 @@ app.layout = html.Div([
                 }
             }
         ),
-    )
+    ),
+    html.Div(
+        dcc.Dropdown(
+            id='cause-dropdown',
+            options=[
+                    {'label': 'Registrierte Fälle', 'value': 'AnzahlFall,NeuerFall,Registrierte Fälle'},
+                    {'label': 'Genese Fälle', 'value': 'AnzahlGenesen,NeuGenesen,Genesene Personen'},
+                    {'label': 'Todesfälle', 'value': 'AnzahlTodesfall,NeuerTodesfall,Todesfälle'},
+            ],
+            value='AnzahlFall,NeuerFall,Registrierte Fälle',
+            multi=False,
+        ),
+        style={'width': '50%', 'font-family': 'Arial'}
+    ),
+    html.Div([
+        html.Div([
+            dcc.Graph(id='pie_age')
+        ], style={'width': '50%'}),
+        html.Div([
+            dcc.Graph(id='pie_gender')
+        ], style={'width': '50%'}),
+    ], style={'display': 'flex'}),
 
 ])
 
@@ -112,18 +134,36 @@ def reformat_box_y(start_date, end_date, locs, col_name, indicator_col):
 
 @app.callback(
     [Output(component_id='line-graph', component_property='figure'),
-     Output(component_id='bar-graph', component_property='figure')],
+     Output(component_id='bar-graph', component_property='figure'),
+     Output(component_id='pie_age', component_property='figure'),
+     Output(component_id='pie_gender', component_property='figure')],
     [Input(component_id='my-date-picker-range', component_property='start_date'),
      Input(component_id='my-date-picker-range', component_property='end_date'),
-     Input(component_id='loc-dropdown', component_property='value')]
+     Input(component_id='loc-dropdown', component_property='value'),
+     Input(component_id='cause-dropdown', component_property='value')]
 )
-def update_graph(start_date, end_date, locs):
-    print(locs, type(locs))
+def update_graph(start_date, end_date, locs, cause):
+    print(cause)
     current_kreis = df.loc[locs, :].iloc[0, :]["Landkreis"]
     if locs is None:
         locs = 5766
     if start_date is None:
         start_date = earliest_date
+
+    cause_col, cause_indiator, title = cause.split(',')
+    print(title)
+    general_loc = df.loc[pd.IndexSlice[5774, :], :]
+    age = general_loc[general_loc[cause_indiator].isin([0, 1])].groupby(['Altersgruppe']).sum()[cause_col]
+    possible_keys_age = ['A00-A04', 'A05-A14', 'A15-A34', 'A35-A59', 'A60-A79', 'A80+']
+    age_new = ['👶🏼 0-4', '👧🏼 5-14', '👱🏻‍♀ 15-34', '👨🏻 35-59', '👴🏻 60-79', '👵🏻 80+']
+    age_mapping = dict(zip(possible_keys_age, age_new))
+    age.index = [age_mapping[key] for key in age.index]
+
+    gender = general_loc[general_loc[cause_indiator].isin([0, 1])].groupby(['Geschlecht']).sum()[cause_col]
+    possible_genders = ['M', 'W', 'unbekannt']
+    gender_new = ['👱🏻‍♂️ M', '👸🏼 W', 'unbekannt']
+    gender_mapping = dict(zip(possible_genders, gender_new))
+    gender.index = [gender_mapping[key] for key in gender.index]
 
     x = pd.Series(index=[pd.to_datetime(start_date), pd.to_datetime(end_date)]).resample('D').ffill().index.values
     x = [ts(y).strftime('%Y-%m-%d') for y in x]
@@ -159,8 +199,23 @@ def update_graph(start_date, end_date, locs):
         ],
         'layout': {
             'title': f'📆 Tägeliche Veränderungen in {current_kreis}'},
-        }
-    return line_figure, bar_figure
+    }
+
+    pie_age = px.pie(
+        data_frame=age,
+        names=age.index,
+        values=age,
+        hole=.3,
+        title=f'👶🏼/👵🏻 {title} nach Altersgruppe in {current_kreis}'
+    )
+    pie_gender = px.pie(
+        data_frame=gender,
+        names=gender.index,
+        values=gender,
+        title=f'👸🏼/🤴🏻 {title} nach Geschlecht in {current_kreis}',
+        hole=.3,
+    )
+    return line_figure, bar_figure, pie_age, pie_gender
 
 
 if __name__ == '__main__':
