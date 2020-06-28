@@ -605,7 +605,7 @@ app.layout = html.Div([html.Div([
     # ]),
     # div_cases_deaths(),
 
-    div_slider(),
+
 
     # div_panel([
     #     div_radio_axis_type('x_death_per_million', 'Linear', 'horizontal axis:'),
@@ -642,7 +642,9 @@ app.layout = html.Div([html.Div([
                 value='total_deaths'
             )
         ]),
-    dcc.Graph(id='graph_1'), # for displaying 1 of my possible graphs
+
+        dcc.Graph(id='graph_1'),
+        div_slider(),
 
     # for variable world graphs
     div_panel([
