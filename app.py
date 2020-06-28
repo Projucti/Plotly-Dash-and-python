@@ -790,7 +790,7 @@ def set_location_options(selected_dataset):
     if selected_dataset == 'World':
         return [{'label': i, 'value': i} for i in locations]
     if selected_dataset == 'Germany':
-        return [{'label': i, 'value': i} for i in german_locations]
+        return [{'label': i, 'value': i} for i in bundeslaender]
 
 
 @app.callback(
