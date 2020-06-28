@@ -1,4 +1,7 @@
 import time
+# the following two are necessary, if date is chosen using a calendar:
+# from datetime import datetime
+# import re
 
 import dash
 import dash_core_components as dcc
@@ -55,6 +58,18 @@ def getMarks(start, end, Nth):
 
     return result
 
+
+# alternative for choosing the date for which the data is shown, use in combination with update_output(date)
+# def div_date_picker():
+#     return html.Div([
+#         (dcc.DatePickerSingle(
+#             id = 'date-picker-single',
+#             min_date_allowed = df_world.date.min(), # dt(1995, 8, 5),
+#             max_date_allowed = df_world.date.max(), # dt(2017, 9, 19),
+#             initial_visible_month = df_world.date.max(), # dt(2017, 8, 5),
+#             date = df_world.date.min())
+#         ),
+#         html.Div(id='output-container-date-picker-single')])
 
 def div_cases_deaths():
     return html.Div(dcc.Graph(id='graph-with-slider-cases-deaths'),
@@ -121,6 +136,7 @@ def div_slider():
 
 
 app.layout = html.Div([
+    # div_date_picker(), # use a calendar to choose date for which data is to be shown (instead of slider)
     div_panel([
         div_radio_axis_type('x_cases_death', 'Log', 'horizontal axis:'),
         div_radio_axis_type('y_cases_death', 'Log', 'vertical axis:')
@@ -171,10 +187,11 @@ def update_figure(selected_date, xaxis_type, yaxis_type):
 
 @app.callback(
     Output('graph-with-slider-cases-deaths-per-million', 'figure'),
-    [Input('date-slider', 'value'),
+    [Input('date-slider', 'value'), # alternatively: Input('date-picker-single', 'date'),
      Input('x_death_per_million', 'value'),
      Input('y_death_per_million', 'value')])
 def update_figure_per_million(selected_date, xaxis_type, yaxis_type):
+    # when using date-picker-single, just use selected_date without transformation for filtering
     filtered_df = df_world[(df_world.date == unixToDatetime(selected_date))
                            & (df_world.location != 'World')
                            & (df_world.location != 'International')]
@@ -212,7 +229,7 @@ def update_figure_facilities(selected_date, xaxis_type, yaxis_type):
                      y='total_cases_per_million',
                      color=filtered_df.continent,
                      hover_name=filtered_df.location,
-                     hover_data=['total_deaths', 'population', 'hospital_beds_per_thousand', 'extreme_poverty']
+                     hover_data=['hospital_beds_per_thousand', 'total_deaths', 'population']
                      )
 
     fig.update_xaxes(title='percentage of population with basic handwashing facilities',
@@ -221,6 +238,18 @@ def update_figure_facilities(selected_date, xaxis_type, yaxis_type):
     fig.update_layout(transition_duration=500)
 
     return fig
+
+
+# alternative for choosing the date for which the data is shown, use in combination with date-picker-single
+# @app.callback(
+#     Output('output-container-date-picker-single', 'children'),
+#     [Input('date-picker-single', 'date')])
+# def update_output(date):
+#     string_prefix = 'Data is shown for: '
+#     if date is not None:
+#         date = datetime.strptime(re.split('T| ', date)[0], '%Y-%m-%d')
+#         date_string = date.strftime('%B %d, %Y')
+#         return string_prefix + date_string
 
 
 if __name__ == '__main__':

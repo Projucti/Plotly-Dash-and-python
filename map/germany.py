@@ -80,7 +80,7 @@ app.layout = html.Div([
                 ],
 
                 'layout': {
-                    'title': 'Tägliche veränderung',
+                    'title': 'Tägliche Veränderung',
 
                 }
             }
