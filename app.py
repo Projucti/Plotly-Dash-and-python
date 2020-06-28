@@ -141,13 +141,13 @@ app.layout = html.Div([
             html.Div(
                 [
                     html.P('Choose Dataset:'),
-                    dcc.Checklist(
+                    dcc.RadioItems(
                             id = 'Dataset',
                             options=[
-                                {'label': 'World', 'value': 'world-data'},
-                                {'label': 'Germany', 'value': 'rki-data'},
+                                {'label': 'World', 'value': 'World'},
+                                {'label': 'Germany', 'value': 'Germany'},
                             ],
-                            value=['World', 'Germany'],
+                            value='World',
                             labelStyle={'display': 'inline-block'}
                     ),
                 ],
