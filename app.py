@@ -560,11 +560,6 @@ app.layout = html.Div([html.Div([
         [
             html.Div(
                 [
-                    # world_map
-                ], className="six columns"
-            ),
-            html.Div(
-                [
                     # bar chart
                     dcc.Graph(id='bar-graph',
                               figure={
@@ -575,10 +570,9 @@ app.layout = html.Div([html.Div([
                                   'layout': {'title': 'Daily new cases for World'},
                               },
                               style={'font-family': 'Helvetica',
-                                     "font-size": "120%",
-                                     "width": "80%"},
+                                     "font-size": "120%"},
                               ),
-                ], className="three columns"
+                ], className="six columns"
             ),
             html.Div(
                 [
@@ -593,7 +587,7 @@ app.layout = html.Div([html.Div([
                               },
                               style=layout_right,
                               ),
-                ], className="three columns"
+                ], className="six columns"
             ),
         ], className="row"
     ),
