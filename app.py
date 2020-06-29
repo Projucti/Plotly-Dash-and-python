@@ -31,11 +31,11 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 print('Initialisiere Deutsche Daten...')
 ts = lambda dt64: datetime.utcfromtimestamp((dt64 - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's'))
 
-for _, _, files in os.walk("./data", topdown=False):
-    if 'data_germany.pickle' in (files):
-        df_germany = pd.read_pickle('./data/data_germany.pickle').drop_duplicates('ObjectId')
-    else:
-        df_germany = preprocess_and_laod_germany_data().drop_duplicates('ObjectId')
+# for _, _, files in os.walk("./data", topdown=False):
+#    if 'data_germany.pickle' in (files):
+#        df_germany = pd.read_pickle('./data/data_germany.pickle').drop_duplicates('ObjectId')
+#    else:
+df_germany = preprocess_and_laod_germany_data().drop_duplicates('ObjectId')
 
 bundeslaender = list(set(df_germany.loc[pd.IndexSlice[:, :], "Bundesland"]))
 all_dates = sorted(set(df_germany.index.get_level_values(1)))
@@ -266,8 +266,8 @@ features = [df_world[column] for column in df_world]
 df = pd.read_csv(world_url)
 df = df[df.location != "World"]
 
-logo_filename = './data/logo_upb.png'
-encoded_image = base64.b64encode(open(logo_filename, 'rb').read())
+# logo_filename = './data/logo_upb.png'
+# encoded_image = base64.b64encode(open(logo_filename, 'rb').read())
 
 
 # -- data end -- #
